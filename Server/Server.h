@@ -4,7 +4,6 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QVector>
-#include <QLabel>
 #include <QBuffer>
 
 
@@ -14,10 +13,9 @@ class Server
     Q_OBJECT
 
     QTcpSocket              *m_socket;
-    QVector<QTcpSocket*>    m_Sockets;
+    QVector<QTcpSocket*>    m_Sockets;    
 
     quint64 m_blockSize;
-    QLabel  *m_label;
 
 public:
     Server();
@@ -27,14 +25,11 @@ protected:
     void incomingConnection(qintptr);
 
 private:
-    void sendToClient(QString _mess);
+    void sendToClient(QString _mess, const QByteArray &_ba);
+    void convertToMono(QImage &);
 
 private slots:
     void slotReadyRead();
-    void openImg();
-
-
-
 };
 
 #endif // SERVER_H

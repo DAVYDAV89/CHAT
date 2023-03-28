@@ -3,7 +3,6 @@
 #include <QImage>
 #include <QPixmap>
 #include <QDialog>
-#include <QMessageBox>
 #include <QDebug>
 
 Server::Server()
@@ -15,14 +14,10 @@ Server::Server()
         qDebug() << "error";
     }
     m_blockSize = 0;
-
-    m_label = new QLabel;
-    m_label->setWindowFlags( Qt::Dialog | Qt::Popup );
 }
 
 Server::~Server()
 {
-    delete m_label;
 }
 
 void Server::incomingConnection(qintptr socketDescriptor)
@@ -44,8 +39,6 @@ void Server::slotReadyRead()
     QDataStream _in(m_socket);
     _in.setVersion(QDataStream::Qt_6_2);
     if (_in.status() == QDataStream::Ok) {
-
-
         for(;;){
             if (m_blockSize == 0) {
                 if (m_socket->bytesAvailable() < 2)
@@ -57,6 +50,7 @@ void Server::slotReadyRead()
 
             QString _str;
             QByteArray _data;
+            QImage     _image;
 
             _in >> _str;
             _in >> _data;
@@ -64,53 +58,45 @@ void Server::slotReadyRead()
             m_blockSize = 0;
 
             if (_data.size() > 0) {
-                sendToClient(_str + "\nSend file");
 
-                QMessageBox msgBox;
-                msgBox.setWindowFlags( Qt::Dialog | Qt::Popup );
-                msgBox.setText("Image received!");
-                msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-                msgBox.setIcon(QMessageBox::Question);
-                msgBox.setDefaultButton(QMessageBox::Ok);
-                int res = msgBox.exec();
-                if (res == QMessageBox::Ok) {
-
-                    QImage _image;
-                    QBuffer _buffer(&_data);
-                    _image.loadFromData(_data,"PNG");
-                    _image.save(&_buffer, "PNG");
-
-                    m_label->setPixmap(QPixmap::fromImage(_image));
-
-                    openImg();
-                }
+                QBuffer _buffer(&_data);
+                _image.loadFromData(_data,"PNG");
+                convertToMono(_image);
+                _image.save(&_buffer, "PNG");
+                sendToClient(_str + "\nSend file", _data);
             }
             else
-                sendToClient(_str);
-
+                sendToClient(_str, _data);
             break;
         }
     }
 }
 
-void Server::sendToClient(QString _mess)
+void Server::sendToClient(QString _mess, const QByteArray &_ba)
 {
     QByteArray _data;
     QDataStream out(&_data, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_6_2);
 
-    out << quint16(0) << _mess;
+    out << quint64(0);
+    out << _mess;
+    out << _ba;
     out.device() -> seek(0);
-    out << quint16( _data.size() - sizeof (quint16) );
+    out << quint64( _data.size() - sizeof (quint64) );
 
     for (const auto &el : m_Sockets )
         el->write(_data);
 
 }
 
-void Server::openImg()
+void Server::convertToMono(QImage & _img)
 {
-    if (!m_label->isHidden())
-        m_label -> close();
-    m_label->show();
+    for( int w = 0; w < _img.rect().right(); w++ ) {
+        for( int h = 0; h < _img.rect().bottom(); h++ ) {
+            QColor col( _img.pixel(w,h) );
+            col.setHsv(col.hue(), 0, col.value(), col.alpha());
+            _img.setPixel(w,h,col.rgb());
+        }
+    }
 }
+

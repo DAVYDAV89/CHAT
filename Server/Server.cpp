@@ -1,8 +1,5 @@
 #include "Server.h"
-#include <QFile>
-#include <QImage>
-#include <QPixmap>
-#include <QDialog>
+#include <QDataStream>
 #include <QDebug>
 
 Server::Server()
@@ -37,7 +34,7 @@ void Server::slotReadyRead()
     m_socket = static_cast<QTcpSocket*>(sender());
 
     QDataStream _in(m_socket);
-    _in.setVersion(QDataStream::Qt_6_2);
+    _in.setVersion(QDataStream::Qt_5_9);
     if (_in.status() == QDataStream::Ok) {
         for(;;){
             if (m_blockSize == 0) {
@@ -49,38 +46,24 @@ void Server::slotReadyRead()
                 break;
 
             QString _str;
-            QByteArray _data;
-            QImage     _image;
-
             _in >> _str;
-            _in >> _data;
 
             m_blockSize = 0;
 
-            if (_data.size() > 0) {
-
-                QBuffer _buffer(&_data);
-                _image.loadFromData(_data,"PNG");
-                convertToMono(_image);
-                _image.save(&_buffer, "PNG");
-                sendToClient(_str + "\nSend file", _data);
-            }
-            else
-                sendToClient(_str, _data);
+            sendToClient(_str);
             break;
         }
     }
 }
 
-void Server::sendToClient(QString _mess, const QByteArray &_ba)
+void Server::sendToClient(QString _mess)
 {
     QByteArray _data;
     QDataStream out(&_data, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_6_2);
+    out.setVersion(QDataStream::Qt_5_9);
 
     out << quint64(0);
     out << _mess;
-    out << _ba;
     out.device() -> seek(0);
     out << quint64( _data.size() - sizeof (quint64) );
 
@@ -88,15 +71,3 @@ void Server::sendToClient(QString _mess, const QByteArray &_ba)
         el->write(_data);
 
 }
-
-void Server::convertToMono(QImage & _img)
-{
-    for( int w = 0; w < _img.rect().right(); w++ ) {
-        for( int h = 0; h < _img.rect().bottom(); h++ ) {
-            QColor col( _img.pixel(w,h) );
-            col.setHsv(col.hue(), 0, col.value(), col.alpha());
-            _img.setPixel(w,h,col.rgb());
-        }
-    }
-}
-

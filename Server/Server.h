@@ -25,8 +25,7 @@ protected:
     void incomingConnection(qintptr);
 
 private:
-    void sendToClient(QString _mess, const QByteArray &_ba);
-    void convertToMono(QImage &);
+    void sendToClient(QString _mess);
 
 private slots:
     void slotReadyRead();

@@ -17,7 +17,7 @@ AppCore::AppCore(QObject *parent)
 
 AppCore::~AppCore()
 {
-
+    delete m_Socket;
 }
 
 void AppCore::slot_ready()

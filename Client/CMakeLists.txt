@@ -60,3 +60,4 @@ if(QT_VERSION_MAJOR EQUAL 6)
     qt_import_qml_plugins(Client)
     qt_finalize_executable(Client)
 endif()
+

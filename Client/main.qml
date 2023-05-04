@@ -14,6 +14,7 @@ Window {
 
         onAddMessage:{
             tEdit.text += _message + "\n"
+            message_str.text = ""
 //            console.log("_message:", _message );
         }
     }

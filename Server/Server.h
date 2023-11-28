@@ -3,8 +3,6 @@
 
 #include <QTcpServer>
 #include <QTcpSocket>
-#include <QVector>
-#include <QBuffer>
 
 
 class Server

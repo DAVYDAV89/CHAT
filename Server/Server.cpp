@@ -1,8 +1,6 @@
 #include "Server.h"
-#include <QFile>
 #include <QImage>
-#include <QPixmap>
-#include <QDialog>
+#include <QBuffer>
 #include <QDebug>
 
 Server::Server()
@@ -18,6 +16,11 @@ Server::Server()
 
 Server::~Server()
 {
+    for (const auto &el : m_Sockets )
+        el->close();
+
+    m_Sockets.clear();
+
 }
 
 void Server::incomingConnection(qintptr socketDescriptor)
@@ -37,7 +40,7 @@ void Server::slotReadyRead()
     m_socket = static_cast<QTcpSocket*>(sender());
 
     QDataStream _in(m_socket);
-    _in.setVersion(QDataStream::Qt_6_2);
+    _in.setVersion(QDataStream::Qt_5_15);
     if (_in.status() == QDataStream::Ok) {
         for(;;){
             if (m_blockSize == 0) {
@@ -76,7 +79,7 @@ void Server::sendToClient(QString _mess, const QByteArray &_ba)
 {
     QByteArray _data;
     QDataStream out(&_data, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_6_2);
+    out.setVersion(QDataStream::Qt_5_15);
 
     out << quint64(0);
     out << _mess;

@@ -1,9 +1,9 @@
 #include <QFileDialog>
+#include <QMessageBox>
 #include <QBuffer>
 #include "widget.h"
-#include "ui_widget.h"
 #include "ConnectionDialog.h"
-#include <QMessageBox>
+#include "ui_widget.h"
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
@@ -35,7 +35,7 @@ Widget::~Widget()
 void Widget::slot_ready()
 {
     QDataStream _in(m_Socket);
-    _in.setVersion(QDataStream::Qt_6_2);
+    _in.setVersion(QDataStream::Qt_5_15);
     if (_in.status() == QDataStream::Ok) {
         for(;;){
             if (m_blockSize == 0) {
@@ -95,7 +95,7 @@ void Widget::on_send_clicked()
 
     QByteArray m_data;
     QDataStream out(&m_data, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_6_2);
+    out.setVersion(QDataStream::Qt_5_15);
 
     out << quint64(0);
     out << _mess;
@@ -103,7 +103,7 @@ void Widget::on_send_clicked()
     out.device() -> seek(0);
     out << quint64( m_data.size() - sizeof (quint64) );
 
-    qDebug() << m_Socket->write(m_data);
+    m_Socket->write(m_data);
     ui->message->clear();
 }
 
